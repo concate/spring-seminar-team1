@@ -21,4 +21,27 @@ class MeetingService(
     fun getMeeting(id: Long): Meeting =
         meetingRepository.findById(id)
             ?: throw MeetingNotFoundException(id)
+
+    fun getMeetings(): List<Meeting> = meetingRepository.findAll()
+
+    fun updateMeeting(
+        id: Long,
+        title: String?,
+        capacity: Int?,
+    ): Meeting {
+        val meeting = getMeeting(id)
+
+        return meetingRepository.update(
+            meeting.copy(
+                title = title ?: meeting.title,
+                capacity = capacity ?: meeting.capacity,
+            ),
+        )
+    }
+
+    fun deleteMeeting(id: Long) {
+        if (!meetingRepository.deleteById(id)) {
+            throw MeetingNotFoundException(id)
+        }
+    }
 }
