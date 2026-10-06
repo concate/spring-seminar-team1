@@ -5,6 +5,7 @@ import com.wafflestudio.spring2026.seminar.SeminarNotFoundException
 import com.wafflestudio.spring2026.session.SessionNotFoundException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
@@ -61,6 +62,28 @@ class GlobalExceptionHandler {
             ApiErrorResponse(
                 code = "SESSION_NOT_FOUND",
                 message = exception.message ?: "회차를 찾을 수 없습니다.",
+            ),
+        )
+
+    @ExceptionHandler(HttpMessageNotReadableException::class)
+    fun handleHttpMessageNotReadable(
+        exception: HttpMessageNotReadableException,
+    ): ResponseEntity<ApiErrorResponse> =
+        ResponseEntity.badRequest().body(
+            ApiErrorResponse(
+                code = "INVALID_REQUEST",
+                message = "요청 본문을 읽을 수 없습니다.",
+            ),
+        )
+
+    @ExceptionHandler(ApiException::class)
+    fun handleApiException(
+        exception: ApiException,
+    ): ResponseEntity<ApiErrorResponse> =
+        ResponseEntity.status(exception.status).body(
+            ApiErrorResponse(
+                code = exception.code,
+                message = exception.message ?: exception.status.reasonPhrase,
             ),
         )
 }
