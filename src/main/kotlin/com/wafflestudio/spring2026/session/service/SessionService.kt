@@ -1,6 +1,7 @@
 package com.wafflestudio.spring2026.session.service
 
 import com.wafflestudio.spring2026.seminar.SeminarNotFoundException
+import com.wafflestudio.spring2026.seminar.repository.SeminarRepository
 import com.wafflestudio.spring2026.session.SessionNotFoundException
 import com.wafflestudio.spring2026.session.model.Session
 import com.wafflestudio.spring2026.session.model.SessionWithRound
@@ -14,6 +15,7 @@ import java.time.ZoneOffset
 @Service
 class SessionService(
     private val sessionRepository: SessionRepository,
+    private val seminarRepository: SeminarRepository,
 ) {
     @Transactional
     fun createSession(
@@ -70,7 +72,7 @@ class SessionService(
         )
 
     private fun checkSeminarExists(seminarId: Long) {
-        if (!sessionRepository.existsSeminarById(seminarId)) {
+        if (!seminarRepository.existsById(seminarId)) {
             throw SeminarNotFoundException(seminarId)
         }
     }
