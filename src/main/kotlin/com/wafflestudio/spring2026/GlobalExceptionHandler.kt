@@ -1,6 +1,8 @@
 package com.wafflestudio.spring2026
 
 import com.wafflestudio.spring2026.meeting.MeetingNotFoundException
+import com.wafflestudio.spring2026.seminar.SeminarNotFoundException
+import com.wafflestudio.spring2026.session.SessionNotFoundException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.MethodArgumentNotValidException
@@ -37,6 +39,28 @@ class GlobalExceptionHandler {
             ApiErrorResponse(
                 code = "MEETING_NOT_FOUND",
                 message = exception.message ?: "모임을 찾을 수 없습니다.",
+            ),
+        )
+
+    @ExceptionHandler(SeminarNotFoundException::class)
+    fun handleSeminarNotFound(
+        exception: SeminarNotFoundException,
+    ): ResponseEntity<ApiErrorResponse> =
+        ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+            ApiErrorResponse(
+                code = "SEMINAR_NOT_FOUND",
+                message = exception.message ?: "세미나를 찾을 수 없습니다.",
+            ),
+        )
+
+    @ExceptionHandler(SessionNotFoundException::class)
+    fun handleSessionNotFound(
+        exception: SessionNotFoundException,
+    ): ResponseEntity<ApiErrorResponse> =
+        ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+            ApiErrorResponse(
+                code = "SESSION_NOT_FOUND",
+                message = exception.message ?: "회차를 찾을 수 없습니다.",
             ),
         )
 }
