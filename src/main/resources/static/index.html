@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Waggle API Console</title>
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --panel: #ffffff;
+    --border: #dfe3e8;
+    --text: #1d232b;
+    --muted: #677382;
+    --accent: #2f6fde;
+    --accent-text: #ffffff;
+    --hover: #eef2f7;
+    --code-bg: #f1f3f6;
+    --get: #1f8a4c;
+    --post: #b56a00;
+    --patch: #6b4fc8;
+    --delete: #c6362f;
+    --ok: #1f8a4c;
+    --warn: #b56a00;
+    --err: #c6362f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171c;
+      --panel: #1c2027;
+      --border: #2e343e;
+      --text: #e3e7ed;
+      --muted: #8b96a5;
+      --accent: #5b8ff0;
+      --accent-text: #0d1117;
+      --hover: #252a33;
+      --code-bg: #161a20;
+      --get: #4cc47f;
+      --post: #e5a23a;
+      --patch: #a28bf0;
+      --delete: #f0706a;
+      --ok: #4cc47f;
+      --warn: #e5a23a;
+      --err: #f0706a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  }
+  code, pre, textarea, input.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
+  header {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--panel);
+  }
+  header h1 { font-size: 16px; margin: 0; }
+  header .spacer { flex: 1; }
+  header a { color: var(--accent); text-decoration: none; }
+  .ids { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; color: var(--muted); font-size: 12px; }
+  .ids label { display: flex; align-items: center; gap: 4px; }
+  .ids input { width: 64px; padding: 2px 6px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); }
+  .layout { display: grid; grid-template-columns: 260px minmax(0, 1fr) 280px; min-height: calc(100vh - 53px); }
+  nav, aside { background: var(--panel); border-right: 1px solid var(--border); padding: 8px 0; overflow-y: auto; }
+  aside { border-right: 0; border-left: 1px solid var(--border); }
+  .group { padding: 10px 16px 4px; font-size: 12px; font-weight: 600; color: var(--muted); }
+  .item {
+    display: flex; align-items: center; gap: 8px; width: 100%;
+    padding: 6px 16px; border: 0; background: none; color: var(--text); text-align: left; cursor: pointer; font: inherit;
+  }
+  .item:hover { background: var(--hover); }
+  .item.active { background: var(--hover); box-shadow: inset 3px 0 0 var(--accent); }
+  .item .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .m { font: 600 11px ui-monospace, Menlo, monospace; min-width: 48px; }
+  .m.GET { color: var(--get); } .m.POST { color: var(--post); } .m.PATCH { color: var(--patch); } .m.DELETE { color: var(--delete); } .m.PUT { color: var(--patch); }
+  main { padding: 16px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+  .card h2 { font-size: 15px; margin: 0 0 4px; }
+  .card p.desc { margin: 0 0 12px; color: var(--muted); }
+  .row { display: flex; gap: 8px; align-items: center; }
+  select, input, textarea, button { font: inherit; }
+  select, input[type=text] {
+    padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text);
+  }
+  #path { flex: 1; min-width: 0; }
+  .params { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+  .params label { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--muted); }
+  .params input { width: 120px; }
+  textarea {
+    width: 100%; min-height: 220px; resize: vertical; padding: 10px; margin-top: 12px;
+    border: 1px solid var(--border); border-radius: 6px; background: var(--code-bg); color: var(--text); tab-size: 2;
+  }
+  textarea:disabled { opacity: .5; min-height: 60px; }
+  .btn {
+    padding: 6px 14px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--text); cursor: pointer;
+  }
+  .btn:hover { background: var(--hover); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
+  .btn.primary:hover { filter: brightness(1.08); }
+  .actions { display: flex; gap: 8px; margin-top: 12px; align-items: center; flex-wrap: wrap; }
+  .hint { color: var(--muted); font-size: 12px; }
+  .err-msg { color: var(--err); font-size: 12px; }
+  .status { font-weight: 700; }
+  .status.s2 { color: var(--ok); } .status.s4 { color: var(--warn); } .status.s5, .status.s0 { color: var(--err); }
+  pre.body {
+    margin: 12px 0 0; padding: 10px; border-radius: 6px; background: var(--code-bg);
+    overflow: auto; max-height: 480px; white-space: pre-wrap; word-break: break-word;
+  }
+  .empty { color: var(--muted); }
+  .hist { display: flex; flex-direction: column; }
+  .hist .item { flex-wrap: wrap; row-gap: 0; }
+  .hist .path { font-family: ui-monospace, Menlo, monospace; font-size: 12px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hist .code { font-size: 12px; font-weight: 700; }
+  .aside-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px 4px; }
+  .aside-head .group { padding: 0; }
+  .link-btn { border: 0; background: none; color: var(--accent); cursor: pointer; font-size: 12px; padding: 0; }
+  @media (max-width: 1000px) {
+    .layout { grid-template-columns: 1fr; }
+    nav, aside { border: 0; border-bottom: 1px solid var(--border); max-height: 260px; }
+    main { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Waggle API Console</h1>
+  <div class="ids" title="응답에서 받은 id 가 자동으로 채워집니다. 직접 고쳐도 됩니다.">
+    최근 id
+    <label>user <input id="id-user" class="mono" type="text"></label>
+    <label>seminar <input id="id-seminar" class="mono" type="text"></label>
+    <label>session <input id="id-session" class="mono" type="text"></label>
+    <label>enrollment <input id="id-enrollment" class="mono" type="text"></label>
+  </div>
+  <div class="spacer"></div>
+  <a href="/swagger-ui/index.html" target="_blank" rel="noopener">Swagger UI ↗</a>
+</header>
+
+<div class="layout">
+  <nav id="nav"></nav>
+
+  <main>
+    <section class="card">
+      <h2 id="ep-name"></h2>
+      <p class="desc" id="ep-desc"></p>
+      <div class="row">
+        <select id="method">
+          <option>GET</option><option>POST</option><option>PATCH</option><option>PUT</option><option>DELETE</option>
+        </select>
+        <input id="path" class="mono" type="text" spellcheck="false">
+      </div>
+      <div class="params" id="params"></div>
+      <textarea id="body" spellcheck="false"></textarea>
+      <div class="actions">
+        <button class="btn primary" id="send">보내기</button>
+        <button class="btn" id="reset">예시 body 다시 채우기</button>
+        <span class="hint">Ctrl/⌘ + Enter 로도 보낼 수 있습니다.</span>
+        <span class="err-msg" id="body-error"></span>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="row">
+        <h2 style="margin:0">응답</h2>
+        <span class="status" id="res-status"></span>
+        <span class="hint" id="res-meta"></span>
+      </div>
+      <pre class="body" id="res-body"><span class="empty">아직 보낸 요청이 없습니다.</span></pre>
+    </section>
+  </main>
+
+  <aside>
+    <div class="aside-head">
+      <span class="group">기록</span>
+      <button class="link-btn" id="clear-history">지우기</button>
+    </div>
+    <div class="hist" id="history"></div>
+  </aside>
+</div>
+
+<script>
+  // ---- 날짜 도우미: 예시 body 를 열 때마다 현재 시각 기준으로 만든다 ----
+  function iso(offsetDays, hour) {
+    const d = new Date(Date.now() + offsetDays * 86400000);
+    if (hour !== undefined) d.setHours(hour, 0, 0, 0);
+    d.setMilliseconds(0);
+    const pad = n => String(n).padStart(2, '0');
+    const tz = -d.getTimezoneOffset();
+    const sign = tz >= 0 ? '+' : '-';
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}` +
+      `${sign}${pad(Math.floor(Math.abs(tz) / 60))}:${pad(Math.abs(tz) % 60)}`;
+  }
+  const suffix = () => Date.now().toString(36);
+  const num = v => (v === '' || v == null || isNaN(Number(v)) ? null : Number(v));
+
+  // ---- 2주차 엔드포인트. creates: 성공 응답의 id 를 어느 칸에 저장할지 ----
+  const ENDPOINTS = [
+    { group: '가입 · 사용자', name: '가입 신청 (루키)', method: 'POST', path: '/auth/signup', creates: 'user',
+      desc: 'ROOKIE 로 가입을 신청합니다. 응답의 id 가 user 칸에 저장됩니다.',
+      body: () => ({ email: `rookie-${suffix()}@example.com`, password: 'password', name: '김와플', githubUsername: `waffle-${suffix()}`, role: 'ROOKIE', seminarId: null }) },
+    { group: '가입 · 사용자', name: '가입 신청 (운영진)', method: 'POST', path: '/auth/signup', creates: 'user',
+      desc: 'STAFF 로 가입을 신청합니다. seminarId 에는 최근 seminar id 가 들어갑니다.',
+      body: ids => ({ email: `staff-${suffix()}@example.com`, password: 'password', name: '이운영', githubUsername: `staff-${suffix()}`, role: 'STAFF', seminarId: num(ids.seminar) }) },
+    { group: '가입 · 사용자', name: '사용자 단건 조회', method: 'GET', path: '/users/{userId}', desc: '사용자 한 명을 조회합니다.' },
+    { group: '가입 · 사용자', name: '가입 심사', method: 'PATCH', path: '/users/{userId}/approval',
+      desc: 'PENDING 사용자를 APPROVED 또는 REJECTED 로 바꿉니다.', body: () => ({ status: 'APPROVED' }) },
+
+    { group: '세미나', name: '세미나 개설', method: 'POST', path: '/seminars', creates: 'seminar',
+      desc: '어제 ~ 7일 뒤까지 신청을 받는 세미나를 만듭니다.',
+      body: () => ({ title: 'Spring 세미나', description: '## 세미나 소개\n\n…', capacity: 30, applyStartAt: iso(-1), applyEndAt: iso(7), totalGraceDays: 3 }) },
+    { group: '세미나', name: '세미나 단건 조회', method: 'GET', path: '/seminars/{seminarId}', desc: 'enrolledCount, status, sessionCount 가 함께 나옵니다.' },
+    { group: '세미나', name: '세미나 수정', method: 'PATCH', path: '/seminars/{seminarId}',
+      desc: 'title, description 만 고칠 수 있습니다. description 에 null 을 보내면 지웁니다.', body: () => ({ title: 'Spring Boot 세미나' }) },
+
+    { group: '수업 회차', name: '회차 등록', method: 'POST', path: '/seminars/{seminarId}/sessions', creates: 'session',
+      desc: '회차와 그 회차의 과제를 함께 만듭니다.',
+      body: () => ({ title: 'Database, ERD, Swagger', startsAt: iso(3, 19), location: '302동 208호', assignmentTitle: 'ERD 설계', lectureContent: '## 수업\n\n…', assignmentContent: '## 과제\n\n…' }) },
+    { group: '수업 회차', name: '회차 목록', method: 'GET', path: '/seminars/{seminarId}/sessions', desc: 'round 오름차순 배열. 본문은 담지 않습니다.' },
+    { group: '수업 회차', name: '회차 단건 조회', method: 'GET', path: '/sessions/{sessionId}', desc: '수업·과제 설명까지 포함해 조회합니다.' },
+
+    { group: '수강 신청', name: '수강 신청', method: 'POST', path: '/seminars/{seminarId}/enrollments', creates: 'enrollment',
+      desc: 'rookieId 에는 최근 user id 가 들어갑니다. APPROVED 된 ROOKIE 여야 합니다.', body: ids => ({ rookieId: num(ids.user) }) },
+    { group: '수강 신청', name: '수강 취소', method: 'DELETE', path: '/seminars/{seminarId}/enrollments/{enrollmentId}', desc: '신청 기간 안에서만 취소할 수 있습니다.' },
+
+    { group: '기타', name: '직접 입력', method: 'GET', path: '/hello', desc: '메서드, 경로, body 를 자유롭게 입력합니다.', body: null, custom: true },
+  ];
+
+  // 경로 변수 이름 → 최근 id 칸
+  const PARAM_TO_ID = { userId: 'user', seminarId: 'seminar', sessionId: 'session', enrollmentId: 'enrollment' };
+  const ID_KEYS = ['user', 'seminar', 'session', 'enrollment'];
+
+  // ---- localStorage 는 막혀 있을 수 있으므로 항상 try/catch ----
+  const store = {
+    get(key, fallback) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; } },
+    set(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* 저장 안 되어도 동작에는 지장 없음 */ } },
+  };
+
+  const $ = id => document.getElementById(id);
+  let ids = store.get('waggle.ids', {});
+  let history = store.get('waggle.history', []);
+  let current = null;
+  let paramValues = {};
+
+  function saveIds() {
+    ID_KEYS.forEach(k => { $('id-' + k).value = ids[k] ?? ''; });
+    store.set('waggle.ids', ids);
+  }
+  ID_KEYS.forEach(k => $('id-' + k).addEventListener('input', e => {
+    ids[k] = e.target.value.trim();
+    store.set('waggle.ids', ids);
+    if (current) renderParams();
+  }));
+
+  function renderNav() {
+    const nav = $('nav');
+    nav.innerHTML = '';
+    let group = null;
+    ENDPOINTS.forEach((ep, i) => {
+      if (ep.group !== group) {
+        group = ep.group;
+        const g = document.createElement('div');
+        g.className = 'group';
+        g.textContent = group;
+        nav.appendChild(g);
+      }
+      const b = document.createElement('button');
+      b.className = 'item' + (current === ep ? ' active' : '');
+      b.innerHTML = `<span class="m ${ep.method}">${ep.method}</span><span class="name"></span>`;
+      b.querySelector('.name').textContent = ep.name;
+      b.onclick = () => select(i);
+      nav.appendChild(b);
+    });
+  }
+
+  function select(i) {
+    current = ENDPOINTS[i];
+    paramValues = {};
+    $('ep-name').textContent = current.name;
+    $('ep-desc').textContent = current.desc || '';
+    $('method').value = current.method;
+    $('path').value = current.path;
+    $('path').readOnly = !current.custom;
+    fillBody();
+    renderParams();
+    renderNav();
+    store.set('waggle.selected', i);
+  }
+
+  function fillBody() {
+    const body = current.body ? current.body(ids) : null;
+    $('body').value = body ? JSON.stringify(body, null, 2) : '';
+    updateBodyState();
+  }
+
+  function updateBodyState() {
+    const m = $('method').value;
+    const noBody = m === 'GET' || m === 'DELETE';
+    $('body').disabled = noBody;
+    $('body').placeholder = noBody ? `${m} 요청은 body 를 보내지 않습니다.` : 'JSON body';
+    $('body-error').textContent = '';
+  }
+
+  function pathParams() {
+    return [...$('path').value.matchAll(/\{(\w+)\}/g)].map(m => m[1]);
+  }
+
+  function renderParams() {
+    const box = $('params');
+    box.innerHTML = '';
+    pathParams().forEach(name => {
+      const label = document.createElement('label');
+      label.textContent = name;
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'mono';
+      input.value = paramValues[name] ?? ids[PARAM_TO_ID[name]] ?? '';
+      input.placeholder = '숫자';
+      input.oninput = () => { paramValues[name] = input.value.trim(); };
+      label.appendChild(input);
+      box.appendChild(label);
+    });
+  }
+
+  function resolvedPath() {
+    return $('path').value.replace(/\{(\w+)\}/g, (_, name) => {
+      const v = paramValues[name] ?? ids[PARAM_TO_ID[name]] ?? '';
+      return encodeURIComponent(v);
+    });
+  }
+
+  async function send() {
+    const method = $('method').value;
+    const path = resolvedPath();
+    const raw = $('body').disabled ? '' : $('body').value.trim();
+    if (raw) {
+      try { JSON.parse(raw); } catch (e) { $('body-error').textContent = 'JSON 형식이 올바르지 않습니다: ' + e.message; return; }
+    }
+    $('body-error').textContent = '';
+    $('res-status').textContent = '…';
+    $('res-status').className = 'status';
+    $('res-meta').textContent = `${method} ${path}`;
+
+    const started = performance.now();
+    let status = 0, text = '';
+    try {
+      const res = await fetch(path, {
+        method,
+        headers: raw ? { 'Content-Type': 'application/json' } : {},
+        body: raw || undefined,
+      });
+      status = res.status;
+      text = await res.text();
+    } catch (e) {
+      text = '요청을 보내지 못했습니다. 서버가 떠 있는지 확인하세요.\n\n' + e.message;
+    }
+    const ms = Math.round(performance.now() - started);
+    showResponse(method, path, status, text, ms);
+
+    if (status >= 200 && status < 300 && current && current.creates && !current.custom) {
+      try {
+        const id = JSON.parse(text).id;
+        if (id != null) { ids[current.creates] = String(id); saveIds(); renderParams(); }
+      } catch { /* id 없는 응답 */ }
+    }
+
+    history.unshift({ method, path: $('path').value, resolved: path, params: { ...paramValues }, body: raw, status, endpoint: ENDPOINTS.indexOf(current) });
+    history = history.slice(0, 50);
+    store.set('waggle.history', history);
+    renderHistory();
+  }
+
+  function showResponse(method, path, status, text, ms) {
+    const s = $('res-status');
+    s.textContent = status ? String(status) : 'ERROR';
+    s.className = 'status s' + String(status)[0];
+    $('res-meta').textContent = `${method} ${path} · ${ms}ms`;
+    let pretty = text;
+    try { pretty = JSON.stringify(JSON.parse(text), null, 2); } catch { /* JSON 이 아니면 그대로 */ }
+    const pre = $('res-body');
+    if (pretty) { pre.textContent = pretty; }
+    else { pre.innerHTML = '<span class="empty">(body 없음)</span>'; }
+  }
+
+  function renderHistory() {
+    const box = $('history');
+    box.innerHTML = '';
+    if (!history.length) {
+      box.innerHTML = '<div class="group" style="font-weight:400">아직 없습니다.</div>';
+      return;
+    }
+    history.forEach(h => {
+      const b = document.createElement('button');
+      b.className = 'item';
+      const cls = 's' + String(h.status)[0];
+      b.innerHTML = `<span class="m ${h.method}">${h.method}</span><span class="path"></span><span class="code status ${cls}">${h.status || 'ERR'}</span>`;
+      b.querySelector('.path').textContent = h.resolved;
+      b.title = h.resolved;
+      b.onclick = () => {
+        const i = h.endpoint >= 0 ? h.endpoint : ENDPOINTS.length - 1;
+        select(i);
+        $('method').value = h.method;
+        $('path').value = h.path;
+        paramValues = { ...h.params };
+        $('body').value = h.body ? JSON.stringify(JSON.parse(h.body), null, 2) : '';
+        updateBodyState();
+        renderParams();
+      };
+      box.appendChild(b);
+    });
+  }
+
+  $('send').onclick = send;
+  $('reset').onclick = fillBody;
+  $('method').onchange = updateBodyState;
+  $('path').oninput = renderParams;
+  $('clear-history').onclick = () => { history = []; store.set('waggle.history', history); renderHistory(); };
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); send(); }
+  });
+
+  saveIds();
+  const saved = store.get('waggle.selected', 0);
+  select(saved >= 0 && saved < ENDPOINTS.length ? saved : 0);
+  renderHistory();
+</script>
+</body>
+</html>
