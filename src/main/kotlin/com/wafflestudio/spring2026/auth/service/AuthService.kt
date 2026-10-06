@@ -5,6 +5,7 @@ import com.wafflestudio.spring2026.auth.dto.SignupRequest
 import com.wafflestudio.spring2026.auth.repository.AuthUserRepository
 import com.wafflestudio.spring2026.auth.repository.RevokedTokenRepository
 import com.wafflestudio.spring2026.seminar.SeminarNotFoundException
+import com.wafflestudio.spring2026.seminar.repository.SeminarRepository
 import com.wafflestudio.spring2026.user.DuplicateEmailException
 import com.wafflestudio.spring2026.user.InvalidSignupException
 import com.wafflestudio.spring2026.user.model.Role
@@ -21,6 +22,7 @@ class AuthService(
     private val authUserRepository: AuthUserRepository,
     private val revokedTokenRepository: RevokedTokenRepository,
     private val userRepository: UserRepository,
+    private val seminarRepository: SeminarRepository,
     private val tokenProvider: TokenProvider,
 ) {
     fun signup(request: SignupRequest): User {
@@ -30,7 +32,7 @@ class AuthService(
             Role.STAFF -> if (request.seminarId == null) throw InvalidSignupException("운영진은 담당 세미나를 선택해야 합니다.")
             Role.ROOKIE -> if (request.seminarId != null) throw InvalidSignupException("루키는 세미나를 선택하지 않습니다.")
         }
-        if (request.seminarId != null && !userRepository.existsSeminarById(request.seminarId)) {
+        if (request.seminarId != null && !seminarRepository.existsById(request.seminarId)) {
             throw SeminarNotFoundException(request.seminarId)
         }
         if (userRepository.existsByEmail(request.email)) throw DuplicateEmailException(request.email)

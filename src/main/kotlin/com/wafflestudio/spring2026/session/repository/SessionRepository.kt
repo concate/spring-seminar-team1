@@ -22,10 +22,4 @@ interface SessionRepository : CrudRepository<Session, Long> {
         @Param("startsAt") startsAt: LocalDateTime,
         @Param("id") id: Long,
     ): Int
-
-    // TODO: 세미나 기능이 머지되면 SeminarRepository.existsById 로 교체합니다.
-    @Query("SELECT EXISTS(SELECT 1 FROM seminar WHERE id = :seminarId)")
-    fun existsSeminarById(
-        @Param("seminarId") seminarId: Long,
-    ): Boolean
 }
