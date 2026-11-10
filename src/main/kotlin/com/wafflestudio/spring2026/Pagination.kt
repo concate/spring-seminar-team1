@@ -43,7 +43,16 @@ data class PageResponse<T>(
     val size: Int,
     val totalElements: Long,
     val totalPages: Int,
-)
+) {
+    fun <R> map(transform: (T) -> R): PageResponse<R> =
+        PageResponse(
+            content = content.map(transform),
+            page = page,
+            size = size,
+            totalElements = totalElements,
+            totalPages = totalPages,
+        )
+}
 
 class InvalidPageRequestException(
     message: String,
