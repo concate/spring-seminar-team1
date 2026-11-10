@@ -21,3 +21,6 @@ class InvalidApprovalStatusException :
 class UserNotPendingException(
     userId: Long,
 ) : ApiException(HttpStatus.CONFLICT, "USER_NOT_PENDING", "ID가 ${userId}인 사용자는 이미 심사가 끝났습니다.")
+
+class InvalidApplicantFilterException :
+    ApiException(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "role 은 STAFF 또는 ROOKIE 여야 합니다.")
