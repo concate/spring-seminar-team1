@@ -6,22 +6,22 @@ import jakarta.validation.constraints.NotNull
 import java.time.OffsetDateTime
 
 data class SeminarCreateRequest(
-    @field:NotBlank(message = "세미나 제목은 비어 있을 수 없습니다.")
+    @field:NotBlank(message = "Seminar title must not be blank.")
     val title: String? = null,
 
     val description: String? = null,
 
-    @field:NotNull(message = "정원은 필수입니다.")
-    @field:Min(value = 1, message = "정원은 1명 이상이어야 합니다.")
+    @field:NotNull(message = "Capacity is required.")
+    @field:Min(value = 1, message = "Capacity must be at least 1.")
     val capacity: Int? = null,
 
-    @field:NotNull(message = "신청 시작 일시는 필수입니다.")
+    @field:NotNull(message = "Application start time is required.")
     val applyStartAt: OffsetDateTime? = null,
 
-    @field:NotNull(message = "신청 종료 일시는 필수입니다.")
+    @field:NotNull(message = "Application end time is required.")
     val applyEndAt: OffsetDateTime? = null,
 
-    @field:NotNull(message = "총 Grace Day 는 필수입니다.")
-    @field:Min(value = 0, message = "총 Grace Day 는 0 이상이어야 합니다.")
+    @field:NotNull(message = "Total grace days is required.")
+    @field:Min(value = 0, message = "Total grace days must be at least 0.")
     val totalGraceDays: Int? = null,
 )
