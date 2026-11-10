@@ -20,5 +20,4 @@ jwt:
 
 waggle:
   auth:
-    # true 면 로그인이 필요한 요청마다 토큰을 검사한다. 2주차 테스트는 토큰을 쓰지 않으므로 false 로 둔다.
-    enabled: false
+    enabled: true

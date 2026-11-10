@@ -15,6 +15,7 @@ import com.wafflestudio.spring2026.user.repository.UserRepository
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import org.springframework.dao.DuplicateKeyException
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 
 @Service
@@ -24,6 +25,7 @@ class AuthService(
     private val userRepository: UserRepository,
     private val seminarRepository: SeminarRepository,
     private val tokenProvider: TokenProvider,
+    private val passwordEncoder: PasswordEncoder,
 ) {
     fun signup(request: SignupRequest): User {
         val role = request.role!!
@@ -40,7 +42,7 @@ class AuthService(
         return userRepository.save(
             User(
                 email = request.email,
-                password = request.password,
+                password = passwordEncoder.encode(request.password)!!,
                 name = request.name,
                 githubUsername = request.githubUsername,
                 role = role,
@@ -56,7 +58,7 @@ class AuthService(
         password: String,
     ): String {
         val user = authUserRepository.findByEmail(email)
-        if (user == null || !passwordMatches(password, user.password)) {
+        if (user == null || !passwordEncoder.matches(password, user.password)) {
             throw UnauthorizedException("이메일 또는 비밀번호가 올바르지 않습니다.")
         }
 
@@ -71,10 +73,4 @@ class AuthService(
             throw UnauthorizedException("로그아웃된 토큰입니다.")
         }
     }
-
-    // TODO: 지금은 평문 비교. 해싱을 붙일 때 이 함수와 가입 시 저장 부분만 바꾼다.
-    private fun passwordMatches(
-        raw: String,
-        stored: String,
-    ): Boolean = raw == stored
 }
