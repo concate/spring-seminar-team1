@@ -4,14 +4,8 @@ import com.wafflestudio.spring2026.ApiException
 import org.springframework.http.HttpStatus
 
 class EnrollmentNotFoundException(
-    enrollmentId: Long,
-) : ApiException(HttpStatus.NOT_FOUND, "ENROLLMENT_NOT_FOUND", "ID가 ${enrollmentId}인 수강 신청을 찾을 수 없습니다.")
-
-class NotRookieException :
-    ApiException(HttpStatus.BAD_REQUEST, "NOT_ROOKIE", "루키만 수강 신청할 수 있습니다.")
-
-class RookieNotApprovedException :
-    ApiException(HttpStatus.FORBIDDEN, "ROOKIE_NOT_APPROVED", "가입이 승인된 루키만 수강 신청할 수 있습니다.")
+    seminarId: Long,
+) : ApiException(HttpStatus.NOT_FOUND, "ENROLLMENT_NOT_FOUND", "세미나 ${seminarId}에 신청한 내역이 없습니다.")
 
 class SeminarNotOpenException :
     ApiException(HttpStatus.CONFLICT, "SEMINAR_NOT_OPEN", "신청 중인 세미나가 아닙니다.")
