@@ -1,18 +1,22 @@
 package com.wafflestudio.spring2026.seminar.service
 
+import com.wafflestudio.spring2026.PageQuery
+import com.wafflestudio.spring2026.PageResponse
+import com.wafflestudio.spring2026.auth.AuthUser
 import com.wafflestudio.spring2026.seminar.InvalidSeminarRequestException
 import com.wafflestudio.spring2026.seminar.SeminarNotFoundException
 import com.wafflestudio.spring2026.seminar.model.Seminar
 import com.wafflestudio.spring2026.seminar.model.SeminarDetail
+import com.wafflestudio.spring2026.seminar.model.SeminarStatus
 import com.wafflestudio.spring2026.seminar.repository.SeminarRepository
-import java.time.LocalDateTime
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
-import java.time.temporal.ChronoUnit
 import org.openapitools.jackson.nullable.JsonNullable
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
 
 @Service
 class SeminarService(
@@ -20,6 +24,7 @@ class SeminarService(
 ) {
     @Transactional
     fun createSeminar(
+        requester: AuthUser,
         title: String,
         description: String?,
         capacity: Int,
@@ -27,8 +32,9 @@ class SeminarService(
         applyEndAt: OffsetDateTime,
         totalGraceDays: Int,
     ): Seminar {
+        requester.requireAdmin()
         if (!applyEndAt.isAfter(applyStartAt)) {
-            throw InvalidSeminarRequestException("신청 종료 일시는 신청 시작 일시보다 뒤여야 합니다.")
+            throw InvalidSeminarRequestException("Application end time must be after the start time.")
         }
 
         return seminarRepository.save(
@@ -45,16 +51,39 @@ class SeminarService(
     }
 
     @Transactional(readOnly = true)
-    fun getSeminar(seminarId: Long): SeminarDetail = detailOf(findSeminar(seminarId))
+    fun getSeminar(
+        requester: AuthUser,
+        seminarId: Long,
+    ): SeminarDetail {
+        requester.requireApproved()
+        return detailOf(findSeminar(seminarId))
+    }
+
+    @Transactional(readOnly = true)
+    fun searchSeminars(
+        keyword: String?,
+        status: SeminarStatus?,
+        pageQuery: PageQuery,
+    ): PageResponse<SeminarDetail> {
+        val normalizedKeyword = keyword?.takeIf { it.isNotBlank() }
+        val now = nowUtc()
+
+        val seminars = seminarRepository.search(normalizedKeyword, status?.name, now, pageQuery.size, pageQuery.offset)
+        val total = seminarRepository.countSearch(normalizedKeyword, status?.name, now)
+
+        return pageQuery.toResponse(seminars.map(::detailOf), total)
+    }
 
     @Transactional
     fun updateSeminar(
+        requester: AuthUser,
         seminarId: Long,
         title: JsonNullable<String?>,
         description: JsonNullable<String?>,
     ): SeminarDetail {
+        requester.requireStaffOf(seminarId)
         if (title.isPresent && title.get().isNullOrBlank()) {
-            throw InvalidSeminarRequestException("세미나 제목은 비어 있을 수 없습니다.")
+            throw InvalidSeminarRequestException("Seminar title must not be blank.")
         }
 
         val seminar = findSeminar(seminarId)
@@ -69,8 +98,7 @@ class SeminarService(
     }
 
     private fun findSeminar(seminarId: Long): Seminar =
-        seminarRepository.findByIdOrNull(seminarId)
-            ?: throw SeminarNotFoundException(seminarId)
+        seminarRepository.findByIdOrNull(seminarId) ?: throw SeminarNotFoundException(seminarId)
 
     private fun detailOf(seminar: Seminar): SeminarDetail {
         val enrolledCount = seminarRepository.countEnrollments(seminar.id!!)
