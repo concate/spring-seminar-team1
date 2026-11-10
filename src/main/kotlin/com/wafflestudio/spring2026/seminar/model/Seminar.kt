@@ -1,8 +1,8 @@
 package com.wafflestudio.spring2026.seminar.model
 
-import java.time.LocalDateTime
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Table
+import java.time.LocalDateTime
 
 @Table("seminar")
 data class Seminar(

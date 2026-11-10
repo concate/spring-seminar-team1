@@ -1,14 +1,18 @@
 package com.wafflestudio.spring2026.session.controller
 
+import com.wafflestudio.spring2026.auth.AuthUser
+import com.wafflestudio.spring2026.auth.LoginUser
 import com.wafflestudio.spring2026.session.dto.SessionCreateRequest
 import com.wafflestudio.spring2026.session.dto.SessionCreateResponse
 import com.wafflestudio.spring2026.session.dto.SessionDetailResponse
 import com.wafflestudio.spring2026.session.dto.SessionSummaryResponse
+import com.wafflestudio.spring2026.session.dto.SessionUpdateRequest
 import com.wafflestudio.spring2026.session.service.SessionService
 import jakarta.validation.Valid
 import java.net.URI
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -20,11 +24,12 @@ class SessionController(
 ) {
     @PostMapping("/seminars/{seminarId}/sessions")
     fun createSession(
+        @LoginUser user: AuthUser,
         @PathVariable("seminarId") seminarId: Long,
         @Valid @RequestBody request: SessionCreateRequest,
     ): ResponseEntity<SessionCreateResponse> {
-        // @Valid 로 필수 항목이 검증되었으므로 non-null 입니다.
         val session = sessionService.createSession(
+            requester = user,
             seminarId = seminarId,
             title = request.title!!,
             startsAt = request.startsAt!!,
@@ -43,17 +48,29 @@ class SessionController(
 
     @GetMapping("/seminars/{seminarId}/sessions")
     fun getSessions(
+        @LoginUser user: AuthUser,
         @PathVariable("seminarId") seminarId: Long,
     ): ResponseEntity<List<SessionSummaryResponse>> =
         ResponseEntity.ok(
-            sessionService.getSessions(seminarId).map(SessionSummaryResponse::from),
+            sessionService.getSessions(user, seminarId).map(SessionSummaryResponse::from),
         )
 
     @GetMapping("/sessions/{sessionId}")
     fun getSession(
+        @LoginUser user: AuthUser,
         @PathVariable("sessionId") sessionId: Long,
     ): ResponseEntity<SessionDetailResponse> =
         ResponseEntity.ok(
-            SessionDetailResponse.from(sessionService.getSession(sessionId)),
+            SessionDetailResponse.from(sessionService.getSession(user, sessionId)),
+        )
+
+    @PatchMapping("/sessions/{sessionId}")
+    fun updateSession(
+        @LoginUser user: AuthUser,
+        @PathVariable("sessionId") sessionId: Long,
+        @RequestBody request: SessionUpdateRequest,
+    ): ResponseEntity<SessionDetailResponse> =
+        ResponseEntity.ok(
+            SessionDetailResponse.from(sessionService.updateSession(user, sessionId, request)),
         )
 }

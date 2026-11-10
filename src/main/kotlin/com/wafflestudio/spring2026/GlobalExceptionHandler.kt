@@ -20,14 +20,14 @@ class GlobalExceptionHandler {
         val fieldErrors = exception.bindingResult.fieldErrors.map { error ->
             FieldErrorResponse(
                 field = error.field,
-                message = error.defaultMessage ?: "잘못된 값입니다.",
+                message = error.defaultMessage ?: "Invalid value.",
             )
         }
 
         return ResponseEntity.badRequest().body(
             ApiErrorResponse(
                 code = "INVALID_REQUEST",
-                message = "요청값이 올바르지 않습니다.",
+                message = "Invalid request.",
                 fieldErrors = fieldErrors,
             ),
         )
@@ -40,7 +40,7 @@ class GlobalExceptionHandler {
         ResponseEntity.status(HttpStatus.NOT_FOUND).body(
             ApiErrorResponse(
                 code = "MEETING_NOT_FOUND",
-                message = exception.message ?: "모임을 찾을 수 없습니다.",
+                message = exception.message ?: "Meeting not found.",
             ),
         )
 
@@ -51,7 +51,7 @@ class GlobalExceptionHandler {
         ResponseEntity.status(HttpStatus.NOT_FOUND).body(
             ApiErrorResponse(
                 code = "SEMINAR_NOT_FOUND",
-                message = exception.message ?: "세미나를 찾을 수 없습니다.",
+                message = exception.message ?: "Seminar not found.",
             ),
         )
 
@@ -62,7 +62,7 @@ class GlobalExceptionHandler {
         ResponseEntity.status(HttpStatus.NOT_FOUND).body(
             ApiErrorResponse(
                 code = "SESSION_NOT_FOUND",
-                message = exception.message ?: "회차를 찾을 수 없습니다.",
+                message = exception.message ?: "Session not found.",
             ),
         )
 
@@ -73,7 +73,7 @@ class GlobalExceptionHandler {
         ResponseEntity.badRequest().body(
             ApiErrorResponse(
                 code = "INVALID_REQUEST",
-                message = "요청 본문을 읽을 수 없습니다.",
+                message = "Could not read the request body.",
             ),
         )
 
@@ -84,7 +84,7 @@ class GlobalExceptionHandler {
         ResponseEntity.badRequest().body(
             ApiErrorResponse(
                 code = "INVALID_REQUEST",
-                message = "${exception.name} 의 값이 올바르지 않습니다.",
+                message = "Invalid value for ${exception.name}.",
             ),
         )
 
