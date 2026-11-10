@@ -12,6 +12,8 @@ data class AuthUser(
 ) {
     val isAdmin: Boolean get() = role == "ADMIN"
     val isApproved: Boolean get() = status == "APPROVED"
+    val isStaff: Boolean get() = role == "STAFF"
+    val isRookie: Boolean get() = role == "ROOKIE"
 
     // 아래 require* 는 3주차 인가에서 각 Service 가 가져다 쓴다. 와장은 모든 권한을 가진다.
 
@@ -25,13 +27,34 @@ data class AuthUser(
 
     fun requireRookie() {
         requireApproved()
-        if (role != "ROOKIE") throw ForbiddenException("루키만 사용할 수 있습니다.")
+        if (!isRookie) throw ForbiddenException("루키만 사용할 수 있습니다.")
+    }
+
+    fun requireAdminOrStaff() {
+        if (isAdmin) return
+        requireApproved()
+        if (!isStaff) throw ForbiddenException("와장과 운영진만 사용할 수 있습니다.")
+    }
+
+    fun requireMemberOf(
+        seminarId: Long,
+        isEnrolled: () -> Boolean,
+    ) {
+        if (isAdmin) return
+        requireApproved()
+        val allowed =
+            when {
+                isStaff -> this.seminarId == seminarId
+                isRookie -> isEnrolled()
+                else -> false
+            }
+        if (!allowed) throw ForbiddenException("이 세미나의 운영진이나 수강생만 사용할 수 있습니다.")
     }
 
     fun requireStaffOf(seminarId: Long) {
         if (isAdmin) return
         requireApproved()
-        if (role != "STAFF" || this.seminarId != seminarId) {
+        if (!isStaff || this.seminarId != seminarId) {
             throw ForbiddenException("해당 세미나를 담당하는 운영진만 사용할 수 있습니다.")
         }
     }
