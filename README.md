@@ -123,3 +123,7 @@ API 계약과 공개 테스트가 기대하는 동작을 만족하도록 구현�
 - 오류 메시지와 재현 방법
 
 비밀번호, 토큰, 개인 인증정보는 저장소나 질문에 포함하지 마세요.
+
+## Team Documents
+
+- [Week 4 design: concurrency control and transaction boundaries](docs/week4-design.md)

@@ -15,3 +15,11 @@ class AlreadyEnrolledException :
 
 class NotInApplyPeriodException :
     ApiException(HttpStatus.CONFLICT, "NOT_IN_APPLY_PERIOD", "신청 기간에만 수강 신청을 취소할 수 있습니다.")
+
+class InvalidEnrollmentRequestException(
+    message: String,
+) : ApiException(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", message)
+
+class EnrollmentInSeminarNotFoundException(
+    enrollmentId: Long,
+) : ApiException(HttpStatus.NOT_FOUND, "ENROLLMENT_NOT_FOUND", "Enrollment $enrollmentId not found in this seminar.")
