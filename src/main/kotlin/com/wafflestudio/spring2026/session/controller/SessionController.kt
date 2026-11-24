@@ -5,8 +5,10 @@ import com.wafflestudio.spring2026.auth.LoginUser
 import com.wafflestudio.spring2026.session.dto.SessionCreateRequest
 import com.wafflestudio.spring2026.session.dto.SessionCreateResponse
 import com.wafflestudio.spring2026.session.dto.SessionDetailResponse
+import com.wafflestudio.spring2026.session.dto.SessionRecordsRequest
 import com.wafflestudio.spring2026.session.dto.SessionSummaryResponse
 import com.wafflestudio.spring2026.session.dto.SessionUpdateRequest
+import com.wafflestudio.spring2026.session.service.SessionRecordService
 import com.wafflestudio.spring2026.session.service.SessionService
 import jakarta.validation.Valid
 import java.net.URI
@@ -17,10 +19,12 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
+import tools.jackson.databind.JsonNode
 
 @RestController
 class SessionController(
     private val sessionService: SessionService,
+    private val sessionRecordService: SessionRecordService,
 ) {
     @PostMapping("/seminars/{seminarId}/sessions")
     fun createSession(
@@ -73,4 +77,15 @@ class SessionController(
         ResponseEntity.ok(
             SessionDetailResponse.from(sessionService.updateSession(user, sessionId, request)),
         )
+
+    @PatchMapping("/sessions/{sessionId}/records")
+    fun updateRecords(
+        @LoginUser user: AuthUser,
+        @PathVariable("sessionId") sessionId: Long,
+        @RequestBody(required = false) body: JsonNode?,
+    ): ResponseEntity<Void> {
+        sessionRecordService.updateRecords(user, sessionId, SessionRecordsRequest.parse(body))
+
+        return ResponseEntity.noContent().build()
+    }
 }
