@@ -4,11 +4,14 @@ import com.wafflestudio.spring2026.PageQuery
 import com.wafflestudio.spring2026.PageResponse
 import com.wafflestudio.spring2026.auth.AuthUser
 import com.wafflestudio.spring2026.enrollment.AlreadyEnrolledException
+import com.wafflestudio.spring2026.enrollment.EnrollmentInSeminarNotFoundException
 import com.wafflestudio.spring2026.enrollment.EnrollmentNotFoundException
+import com.wafflestudio.spring2026.enrollment.InvalidEnrollmentRequestException
 import com.wafflestudio.spring2026.enrollment.NotInApplyPeriodException
 import com.wafflestudio.spring2026.enrollment.SeminarNotOpenException
 import com.wafflestudio.spring2026.enrollment.dto.MyEnrollmentResponse
 import com.wafflestudio.spring2026.enrollment.model.Enrollment
+import com.wafflestudio.spring2026.enrollment.model.EnrollmentChange
 import com.wafflestudio.spring2026.enrollment.repository.EnrollmentRepository
 import com.wafflestudio.spring2026.seminar.SeminarNotFoundException
 import com.wafflestudio.spring2026.seminar.dto.SeminarResponse
@@ -72,6 +75,33 @@ class EnrollmentService(
         if (!seminar.isApplyPeriod(nowUtc())) throw NotInApplyPeriodException()
 
         enrollmentRepository.delete(enrollment)
+    }
+
+    @Transactional
+    fun updateEnrollment(
+        requester: AuthUser,
+        seminarId: Long,
+        enrollmentId: Long,
+        change: EnrollmentChange,
+    ): Enrollment {
+        val seminar = seminarRepository.findByIdForUpdate(seminarId)
+            ?: throw SeminarNotFoundException(seminarId)
+        requester.requireStaffOf(seminarId)
+
+        val enrollment = enrollmentRepository.findByIdOrNull(enrollmentId)
+            ?.takeIf { it.seminarId == seminarId }
+            ?: throw EnrollmentInSeminarNotFoundException(enrollmentId)
+
+        if (change.graceDaysRemaining != null && change.graceDaysRemaining > seminar.totalGraceDays) {
+            throw InvalidEnrollmentRequestException("graceDaysRemaining must be at most ${seminar.totalGraceDays}.")
+        }
+
+        return enrollmentRepository.save(
+            enrollment.copy(
+                graceDaysRemaining = change.graceDaysRemaining ?: enrollment.graceDaysRemaining,
+                dropped = change.dropped ?: enrollment.dropped,
+            ),
+        )
     }
 
     @Transactional(readOnly = true)
